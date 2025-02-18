@@ -70,7 +70,7 @@ def _resize_pil_image(img, long_edge_size):
     return img.resize(new_size, interp)
 
 
-def load_images(folder_or_list, size, square_ok=False, verbose=True):
+def load_images(folder_or_list, size, square_ok=False, verbose=True, crop=None):
     """ open and convert all images in a list or folder to proper input format for DUSt3R
     """
     if isinstance(folder_or_list, str):
@@ -91,11 +91,18 @@ def load_images(folder_or_list, size, square_ok=False, verbose=True):
         supported_images_extensions += ['.heic', '.heif']
     supported_images_extensions = tuple(supported_images_extensions)
 
+    if crop is not None:
+        center_crop = tvf.CenterCrop(crop)
+
     imgs = []
     for path in folder_content:
         if not path.lower().endswith(supported_images_extensions):
             continue
         img = exif_transpose(PIL.Image.open(os.path.join(root, path))).convert('RGB')
+
+        if crop is not None:
+            img = center_crop(img)
+
         W1, H1 = img.size
         if size == 224:
             # resize short side to 224 (then crop)
